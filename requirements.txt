@@ -1,0 +1,10 @@
+numpy
+pandas
+scikit-learn
+Pillow
+tqdm
+matplotlib
+fastapi
+uvicorn
+pydantic
+python-multipart
