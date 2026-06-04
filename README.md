@@ -1,245 +1,299 @@
 # Skin Disease Detection AI
 
-End-to-end deep learning system for skin lesion classification using ResNet50, PyTorch, Grad-CAM explainability and Android deployment.
+![Python](https://img.shields.io/badge/Python-3.10-blue)
+![PyTorch](https://img.shields.io/badge/PyTorch-Deep%20Learning-red)
+![Computer Vision](https://img.shields.io/badge/Computer%20Vision-Medical%20AI-green)
+![Grad-CAM](https://img.shields.io/badge/Explainability-Grad--CAM-orange)
+![Android](https://img.shields.io/badge/Android-Application-brightgreen)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
-> Research prototype. Not intended for real medical diagnosis.
+Интеллектуальная система классификации кожных поражений по дерматоскопическим изображениям с использованием глубокого обучения.
 
-## Project Overview
+Проект включает полный ML-пайплайн: анализ данных, подготовку изображений, обучение нейросетевой модели, сравнение архитектур ResNet, оценку качества классификации, визуализацию Grad-CAM и интеграцию модели в Android-приложение.
 
-Skin cancer is one of the most common oncological diseases worldwide. Early detection is especially important for melanoma because delayed diagnosis can significantly reduce treatment effectiveness.
+---
 
-This project implements an AI-based system for dermoscopic image classification. The system analyzes a skin lesion image, predicts one of eight diagnostic classes and provides probability scores for each class.
+## О проекте
+В проекте реализованы:
 
-The project covers the full ML pipeline:
+* анализ набора данных ISIC 2019;
+* предварительная обработка изображений;
+* компенсация дисбаланса классов;
+* обучение моделей ResNet18, ResNet34 и ResNet50;
+* выбор итоговой архитектуры ResNet50;
+* использование Focal Loss;
+* оценка качества модели на тестовой выборке;
+* построение ROC и Precision-Recall кривых для класса MEL;
+* визуализация областей внимания модели методом Grad-CAM;
+* Android-приложение для практического использования модели.
 
-- dataset analysis and preprocessing;
-- class imbalance handling;
-- ResNet-based model training;
-- model comparison and evaluation;
-- Grad-CAM visual explanation;
-- Android application integration.
+---
 
-## Problem
 
-Skin lesion classification is challenging because different diseases may have visually similar patterns. Benign nevi and melanoma can share similar color, border and texture characteristics, especially at early stages.
+## Диагностические классы
 
-The main goal of this project is to build a model that can classify dermoscopic images and provide interpretable predictions for medical image analysis research.
+В проекте используется 8 классов кожных заболеваний и состояний:
 
-## Dataset
+| Код  | Класс                                        |
+| ---- | -------------------------------------------- |
+| AK   | Актинический кератоз                         |
+| BCC  | Базальноклеточная карцинома                  |
+| BKL  | Доброкачественные кератозоподобные поражения |
+| DF   | Дерматофиброма                               |
+| MEL  | Меланома                                     |
+| NV   | Меланоцитарный невус                         |
+| SCC  | Плоскоклеточная карцинома                    |
+| VASC | Сосудистые поражения                         |
 
-The project uses the ISIC 2019 dataset for skin lesion classification.
+---
 
-The task is formulated as multi-class classification with 8 classes:
+## Используемый датасет
 
-| Code | Class |
-|---|---|
-| AK | Actinic Keratosis |
-| BCC | Basal Cell Carcinoma |
-| BKL | Benign Keratosis-like Lesions |
-| DF | Dermatofibroma |
-| MEL | Melanoma |
-| NV | Melanocytic Nevus |
-| SCC | Squamous Cell Carcinoma |
-| VASC | Vascular Lesions |
+В качестве источника данных использован набор **ISIC 2019**, содержащий дерматоскопические изображения кожных поражений и разметку по диагностическим классам.
 
-## Key Dataset Challenges
+---
 
-The dataset has a strong class imbalance. The NV class is significantly larger than rare classes such as DF and VASC.
+## Анализ данных
 
-To handle this problem, the project uses:
+Одной из основных проблем датасета является выраженный дисбаланс классов. Наиболее многочисленным является класс `NV`, тогда как классы `DF` и `VASC` представлены значительно меньшим количеством изображений.
 
-- stratified train / validation / test split;
-- image resizing to 224×224;
-- RGB normalization;
-- data augmentation;
-- class weights;
-- Focal Loss.
+Это важно, потому что при обычном обучении модель может смещаться в сторону наиболее частых классов и хуже распознавать редкие, но клинически важные случаи.
 
-## Model Architecture
+<p align="center">
+  <img src="reports/dataset_analysis/class_distribution.png" alt="Class distribution" width="700">
+</p>
 
-The final model is based on ResNet50 with transfer learning.
+<p align="center">
+  <b>Распределение классов в обучающей выборке</b>
+</p>
 
-ResNet50 was selected after comparison with ResNet18 and ResNet34. The deeper architecture showed better ability to extract complex visual features such as lesion shape, border irregularity, color heterogeneity and texture changes.
+Также была построена корреляционная матрица классов. Отрицательные значения между классами объясняются тем, что каждое изображение относится только к одному диагностическому классу.
 
-```text
-Input Image
-    ↓
-Preprocessing
-    ↓
-ResNet50 Feature Extractor
-    ↓
-Modified MLP Classification Head
-    ↓
-Softmax Probabilities
-    ↓
-Predicted Skin Lesion Class
-```
+<p align="center">
+  <img src="reports/dataset_analysis/correlation_matrix.png" alt="Correlation matrix" width="650">
+</p>
 
-## Training Strategy
+<p align="center">
+  <b>Корреляционная матрица классов</b>
+</p>
 
-The training pipeline includes:
+Дополнительно анализировались размеры изображений. Поскольку исходные изображения имели разные размеры, все данные были приведены к единому входному формату.
 
-- transfer learning;
-- modified classification head;
-- AdamW optimizer;
-- Focal Loss;
-- class weights;
-- learning rate scheduling;
-- validation monitoring;
-- evaluation on a separate test set.
+<p align="center">
+  <img src="reports/dataset_analysis/image_size_distribution.png" alt="Image size distribution" width="700">
+</p>
 
-## Results
+<p align="center">
+  <b>Распределение размеров изображений</b>
+</p>
 
-The final model achieved the following test results:
+---
 
-| Metric | Value |
-|---|---:|
-| Accuracy | 84.41% |
-| Weighted F1-score | 0.8401 |
-| Macro F1-score | 0.7440 |
-| MEL Precision | 0.8238 |
-| MEL Recall | 0.6819 |
-| MEL F1-score | 0.7462 |
-| MEL ROC AUC | 0.9358 |
+## Предобработка данных
 
-The model showed strong overall classification quality and good separation ability for melanoma according to ROC AUC.
+Перед подачей изображений в модель выполнялась стандартная подготовка:
 
-## Explainability
+* изменение размера изображений до `224×224`;
+* преобразование изображения в тензор;
+* нормализация RGB-каналов;
+* аугментация обучающей выборки;
+* стратифицированное разделение данных;
+* подготовка загрузчиков данных для PyTorch.
 
-Grad-CAM was used to visualize which image regions influenced the model prediction.
+Использованные преобразования помогают сделать обучение устойчивее к различиям в масштабе, освещении, положении объекта и качестве изображения.
 
-This is important for medical image analysis because the final prediction should not be treated as a black-box result. Visual explanation helps understand whether the model focuses on the lesion area or irrelevant background artifacts.
+---
 
-## Android Application
+## Компенсация дисбаланса классов
 
-The trained model was integrated into an Android application prototype.
+Из-за сильного дисбаланса классов в проекте применялись два подхода:
 
-The application allows the user to:
+1. **Веса классов**
+   Редкие классы получают больший вес в функции ошибки, что усиливает их вклад при обучении.
 
-- select a skin lesion image;
-- run model inference;
-- view the predicted class;
-- view probability scores for all classes.
+2. **Focal Loss**
+   Функция потерь делает больший акцент на сложных и ошибочно классифицируемых примерах.
 
-## Repository Structure
+---
 
-```text
-skin-disease-detection-ai/
-│
-├── README.md
-├── requirements.txt
-├── .gitignore
-├── LICENSE
-│
-├── src/
-│   ├── train.py
-│   ├── evaluate.py
-│   ├── predict.py
-│   ├── model.py
-│   ├── dataset.py
-│   └── gradcam.py
-│
-├── notebooks/
-│   └── experiments.ipynb
-│
-├── results/
-│   ├── class_distribution.png
-│   ├── confusion_matrix.png
-│   ├── training_history.png
-│   ├── roc_curve_mel.png
-│   ├── pr_curve_mel.png
-│   └── gradcam_examples.png
-│
-├── android/
-│   └── screenshots/
-│
-├── models/
-│   └── README.md
-│
-└── docs/
-    └── thesis_summary.md
-```
+## Архитектура модели
 
-## Installation
+В проекте сравнивались архитектуры:
 
-```bash
-git clone https://github.com/molokinaleksej5/skin-disease-detection-ai.git
-cd skin-disease-detection-ai
+* ResNet18;
+* ResNet34;
+* ResNet50.
 
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
+В качестве итоговой модели была выбрана **ResNet50**, так как она показала лучший баланс между качеством классификации и способностью извлекать сложные визуальные признаки.
 
-For Windows:
+Базовая классификационная часть ResNet50 была заменена на модифицированную MLP-голову, адаптированную под 8 классов.
 
-```bash
-.venv\Scripts\activate
-pip install -r requirements.txt
-```
+---
 
-## Inference Example
+## Обучение модели
 
-```bash
-python src/predict.py --image path/to/image.jpg
-```
+В процессе обучения использовались:
 
-Example output:
+* PyTorch;
+* transfer learning;
+* ResNet50;
+* AdamW;
+* Focal Loss;
+* class weights;
+* learning rate scheduler;
+* train / validation / test split;
+* контроль качества по метрикам классификации.
 
-```json
-{
-  "predicted_class": "MEL",
-  "confidence": 0.5629,
-  "probabilities": {
-    "AK": 0.0001,
-    "BCC": 0.0000,
-    "BKL": 0.0259,
-    "DF": 0.0000,
-    "MEL": 0.5629,
-    "NV": 0.4110,
-    "SCC": 0.0001,
-    "VASC": 0.0000
-  }
-}
-```
+---
 
-## Tech Stack
+## Результаты обучения
 
-- Python
-- PyTorch
-- TorchVision
-- NumPy
-- Pandas
-- Scikit-learn
-- OpenCV
-- Matplotlib
-- Grad-CAM
-- Android
-- Git
+В проекте сравнивались разные архитектуры ResNet. Графики обучения позволяют оценить изменение функции потерь и точности на обучающей и валидационной выборках.
 
-## Limitations
+<p align="center">
+  <img src="reports/plots/train_acc_all.png" alt="Train accuracy" width="700">
+</p>
 
-This project is a research and educational prototype. It is not a certified medical device and must not be used for real diagnosis.
+<p align="center">
+  <b>Точность на обучающей выборке</b>
+</p>
 
-Current limitations:
+<p align="center">
+  <img src="reports/plots/val_acc_all.png" alt="Validation accuracy" width="700">
+</p>
 
-- model performance depends on image quality;
-- rare classes remain harder to classify;
-- visually similar classes may produce close probabilities;
-- clinical validation was not performed;
-- the system should be used only as a decision-support prototype.
+<p align="center">
+  <b>Точность на валидационной выборке</b>
+</p>
 
-## Future Improvements
+<p align="center">
+  <img src="reports/plots/train_loss_all.png" alt="Train loss" width="700">
+</p>
 
-- add FastAPI inference service;
-- add Docker support;
-- add MLflow experiment tracking;
-- improve rare class performance;
-- add live demo;
-- expand Android application functionality;
-- test additional architectures such as EfficientNet and ConvNeXt.
+<p align="center">
+  <b>Функция потерь на обучающей выборке</b>
+</p>
 
-## Author
+<p align="center">
+  <img src="reports/plots/val_loss_all.png" alt="Validation loss" width="700">
+</p>
 
-Alexey Molokin  
+<p align="center">
+  <b>Функция потерь на валидационной выборке</b>
+</p>
+
+---
+
+## Итоговые метрики
+
+Итоговая модель ResNet50 показала следующие результаты на тестовой выборке:
+
+| Метрика           | Значение |
+| ----------------- | -------: |
+| Accuracy          |   84.41% |
+| Weighted F1-score |   0.8401 |
+| Macro F1-score    |   0.7440 |
+| MEL Precision     |   0.8238 |
+| MEL Recall        |   0.6819 |
+| MEL F1-score      |   0.7462 |
+| MEL ROC AUC       |   0.9358 |
+
+---
+
+## ROC и Precision-Recall
+
+Для класса `MEL` дополнительно были построены ROC и Precision-Recall кривые. Это важно, потому что меланома является наиболее клинически значимым классом в данной задаче.
+
+<p align="center">
+  <img src="reports/figures/roc_mel.png" alt="ROC curve MEL" width="700">
+</p>
+
+<p align="center">
+  <b>ROC-кривая для класса MEL</b>
+</p>
+
+<p align="center">
+  <img src="reports/figures/pr_mel.png" alt="Precision Recall curve MEL" width="700">
+</p>
+
+<p align="center">
+  <b>Precision-Recall кривая для класса MEL</b>
+</p>
+
+---
+
+## Анализ уверенности модели
+
+Для оценки распределения вероятностей предсказаний был построен график уверенности модели. Он позволяет понять, насколько часто модель выдаёт высокую или низкую уверенность при классификации.
+
+<p align="center">
+  <img src="reports/figures/confidence_hist.png" alt="Confidence histogram" width="700">
+</p>
+
+<p align="center">
+  <b>Распределение уверенности модели</b>
+</p>
+
+---
+
+## Интерпретируемость: Grad-CAM
+
+В медицинских задачах важно не только получить итоговый класс, но и понять, на какие области изображения модель опиралась при принятии решения.
+
+Для этого в проекте реализован метод **Grad-CAM**. Он строит тепловую карту, показывающую области изображения, которые сильнее всего повлияли на итоговый прогноз модели.
+
+<p align="center">
+  <img src="reports/gradcam/example_cam.jpg" alt="Grad-CAM example" width="750">
+</p>
+
+<p align="center">
+  <b>Пример визуализации Grad-CAM</b>
+</p>
+
+---
+
+## Используемые технологии
+
+### Machine Learning
+
+* Python
+* PyTorch
+* TorchVision
+* NumPy
+* Pandas
+* Scikit-learn
+
+### Computer Vision
+
+* OpenCV
+* PIL
+* Matplotlib
+* Grad-CAM
+
+### Архитектуры
+
+* ResNet18
+* ResNet34
+* ResNet50
+
+### Приложение
+
+* Android Studio, Kotlin, JS
+* PyTorch Lite
+* GUI-прототип
+
+### Инструменты
+
+* Git
+* PyCharm
+* Jupyter Notebook
+* Windows / Linux-ready structure
+
+---
+
+## Автор
+
+**Алексей Молокин**
 ML Engineer / Python Developer
+
+GitHub: [molokinaleksej5](https://github.com/molokinaleksej5)
